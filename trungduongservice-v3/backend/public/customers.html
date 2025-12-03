@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý khách hàng - TrungDuongService</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">TrungDuongService</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #3498db;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Quản lý khách hàng</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Thêm khách hàng</button>
+            </div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm khách hàng...">
+                    <button class="btn btn-primary" onclick="loadCustomers()">Tìm</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã KH</th>
+                                <th>Tên khách hàng</th>
+                                <th>Số điện thoại</th>
+                                <th>Email</th>
+                                <th>Công nợ</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersBody">
+                            <tr><td colspan="6" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm khách hàng</h2>
+                <button class="modal-close" onclick="closeModal('customerModal')">&times;</button>
+            </div>
+            <form id="customerForm">
+                <input type="hidden" id="customerId">
+                <div class="form-group">
+                    <label>Tên khách hàng *</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label>Mã KH *</label>
+                    <input type="text" id="customerCode" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="customerPhone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="customerEmail">
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <textarea id="customerAddress"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-block">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadCustomers = async () => {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const data = await apiRequest(`/customers?search=${search}&per_page=50`);
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('customersBody');
+                    if (data.data.data.length > 0) {
+                        tbody.innerHTML = data.data.data.map(c => `
+                            <tr>
+                                <td>${c.code}</td>
+                                <td>${c.name}</td>
+                                <td>${c.phone || '-'}</td>
+                                <td>${c.email || '-'}</td>
+                                <td style="color: ${c.total_debt > 0 ? '#e74c3c' : '#27ae60'}">${formatCurrency(c.total_debt)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editCustomer(${c.id})">Sửa</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Xóa</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có khách hàng</td></tr>';
+                    }
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const openAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm khách hàng';
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerId').value = '';
+            openModal('customerModal');
+        };
+
+        const editCustomer = async (id) => {
+            try {
+                const data = await apiRequest(`/customers/${id}`);
+                if (data && data.success) {
+                    const c = data.data;
+                    document.getElementById('modalTitle').textContent = 'Sửa khách hàng';
+                    document.getElementById('customerId').value = c.id;
+                    document.getElementById('customerName').value = c.name;
+                    document.getElementById('customerCode').value = c.code;
+                    document.getElementById('customerPhone').value = c.phone || '';
+                    document.getElementById('customerEmail').value = c.email || '';
+                    document.getElementById('customerAddress').value = c.address || '';
+                    openModal('customerModal');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const deleteCustomer = async (id) => {
+            if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
+
+            try {
+                const data = await apiRequest(`/customers/${id}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    showAlert('Xóa khách hàng thành công!', 'success');
+                    loadCustomers();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('customerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('customerId').value;
+            const payload = {
+                name: document.getElementById('customerName').value,
+                code: document.getElementById('customerCode').value,
+                phone: document.getElementById('customerPhone').value,
+                email: document.getElementById('customerEmail').value,
+                address: document.getElementById('customerAddress').value,
+            };
+
+            try {
+                const url = id ? `/customers/${id}` : '/customers';
+                const method = id ? 'PUT' : 'POST';
+
+                const data = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(payload),
+                });
+
+                if (data && data.success) {
+                    showAlert(data.message, 'success');
+                    closeModal('customerModal');
+                    loadCustomers();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadCustomers);
+    </script>
+</body>
+</html>

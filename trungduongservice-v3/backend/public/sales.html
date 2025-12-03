@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bán hàng - TrungDuongService</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">TrungDuongService</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #3498db;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Tạo đơn bán hàng</h2>
+                <button class="btn btn-primary" onclick="viewOrders()">Xem đơn hàng</button>
+            </div>
+            <div class="card-body">
+                <form id="salesForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Khách hàng *</label>
+                            <select id="customerId" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Kho *</label>
+                            <select id="warehouseId" required></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày bán *</label>
+                        <input type="date" id="orderDate" required>
+                    </div>
+                    <h3>Sản phẩm</h3>
+                    <div id="itemsContainer"></div>
+                    <button type="button" class="btn btn-success" onclick="addItem()">+ Thêm sản phẩm</button>
+                    <hr>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Giảm giá</label>
+                            <input type="number" id="discount" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Thuế</label>
+                            <input type="number" id="tax" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Số tiền thanh toán</label>
+                        <input type="number" id="paidAmount" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Ghi chú</label>
+                        <textarea id="notes"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Tạo đơn hàng</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let items = [];
+        let products = [];
+        let customers = [];
+        let warehouses = [];
+
+        const loadData = async () => {
+            try {
+                const [productsData, customersData] = await Promise.all([
+                    apiRequest('/products?per_page=1000'),
+                    apiRequest('/customers?per_page=1000')
+                ]);
+
+                products = productsData.data.data;
+                customers = customersData.data.data;
+
+                // Hardcoded warehouse for demo
+                warehouses = [{id: 1, name: 'Kho chính'}];
+
+                document.getElementById('customerId').innerHTML = customers.map(c =>
+                    `<option value="${c.id}">${c.name}</option>`
+                ).join('');
+
+                document.getElementById('warehouseId').innerHTML = warehouses.map(w =>
+                    `<option value="${w.id}">${w.name}</option>`
+                ).join('');
+
+                document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const addItem = () => {
+            items.push({ product_id: '', quantity: 1, unit_price: 0, discount: 0 });
+            renderItems();
+        };
+
+        const removeItem = (index) => {
+            items.splice(index, 1);
+            renderItems();
+        };
+
+        const renderItems = () => {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = items.map((item, index) => `
+                <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 6px;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 60px; gap: 10px; align-items: end;">
+                        <div class="form-group">
+                            <label>Sản phẩm</label>
+                            <select onchange="updatePrice(${index}, this.value)" required>
+                                <option value="">Chọn sản phẩm</option>
+                                ${products.map(p => `<option value="${p.id}" ${item.product_id == p.id ? 'selected' : ''}>${p.name} - ${formatCurrency(p.selling_price)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Số lượng</label>
+                            <input type="number" value="${item.quantity}" min="1" onchange="items[${index}].quantity = this.value">
+                        </div>
+                        <div class="form-group">
+                            <label>Đơn giá</label>
+                            <input type="number" value="${item.unit_price}" min="0" onchange="items[${index}].unit_price = this.value">
+                        </div>
+                        <div class="form-group">
+                            <label>Giảm giá</label>
+                            <input type="number" value="${item.discount}" min="0" onchange="items[${index}].discount = this.value">
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(${index})">Xóa</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const updatePrice = (index, productId) => {
+            const product = products.find(p => p.id == productId);
+            if (product) {
+                items[index].product_id = productId;
+                items[index].unit_price = product.selling_price;
+                renderItems();
+            }
+        };
+
+        const viewOrders = () => {
+            window.location.href = '/orders.html';
+        };
+
+        document.getElementById('salesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (items.length === 0) {
+                showAlert('Vui lòng thêm ít nhất 1 sản phẩm', 'danger');
+                return;
+            }
+
+            const payload = {
+                customer_id: document.getElementById('customerId').value,
+                warehouse_id: document.getElementById('warehouseId').value,
+                order_date: document.getElementById('orderDate').value,
+                items: items,
+                discount: document.getElementById('discount').value || 0,
+                tax: document.getElementById('tax').value || 0,
+                paid_amount: document.getElementById('paidAmount').value || 0,
+                notes: document.getElementById('notes').value,
+            };
+
+            try {
+                const data = await apiRequest('/sales-orders', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
+
+                if (data && data.success) {
+                    showAlert('Tạo đơn hàng thành công!', 'success');
+                    document.getElementById('salesForm').reset();
+                    items = [];
+                    renderItems();
+                    document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
