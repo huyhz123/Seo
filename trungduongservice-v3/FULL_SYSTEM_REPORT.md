@@ -1,8 +1,8 @@
-# 📋 BÁO CÁO TỔNG THỂ HỆ THỐNG - TrungDuongService v3.0
+# 📋 BÁO CÁO TỔNG THỂ HỆ THỐNG - HZ v3.0
 
 ## 🎯 TỔNG QUAN Dự ÁN
 
-**Tên dự án:** TrungDuongService v3.0  
+**Tên dự án:** HZ v3.0  
 **Mục đích:** Hệ thống quản lý cửa hàng sửa chữa điện thoại & bán pin iPhone/iPad  
 **Công nghệ:** Laravel 11 + Pure HTML/CSS/JavaScript  
 **Trạng thái:** ✅ 100% HOÀN THÀNH - PRODUCTION READY
@@ -863,14 +863,12 @@ debt_payments
 ## 📞 SUPPORT
 
 **Business:**
-- Name: TrungDuongService
-- Phone: 0976494949 | 083 7555 5000
-- Address: 436B/65 Đường 3/2, Q.10, TP.HCM
-- Domain: trungduongservice.com
+- Name: HZ
+- Domain: hz.com
 
 **Demo accounts:**
-- Admin: admin@trungduongservice.com / password
-- Staff: staff@trungduongservice.com / password
+- Admin: admin@hz.com / password
+- Staff: staff@hz.com / password
 
 ---
 

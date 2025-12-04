@@ -1,13 +1,11 @@
-# TrungDuongService v3.0
+# HZ v3.0
 
 ## 📱 Hệ thống quản lý cửa hàng sửa chữa điện thoại
 
 ### 🏢 Thông tin doanh nghiệp
-- **Tên**: TrungDuongService
+- **Tên**: HZ
 - **Lĩnh vực**: Sửa chữa điện thoại, bán pin iPhone/iPad
-- **Hotline**: 0976494949 | 083 7555 5000
-- **Địa chỉ**: 436B/65 Đường 3/2, Q.10, TP.HCM
-- **Website**: trungduongservice.com
+- **Website**: hz.com
 
 ---
 
@@ -117,7 +115,7 @@ cp .env.example .env
 php artisan key:generate
 
 # 4. Configure database in .env
-DB_DATABASE=trungduong_db
+DB_DATABASE=hz_db
 DB_USERNAME=root
 DB_PASSWORD=
 
@@ -132,7 +130,7 @@ php artisan serve
 Mở trình duyệt: `http://localhost:8000/login.html`
 
 **Tài khoản demo:**
-- Email: `admin@trungduongservice.com`
+- Email: `admin@hz.com`
 - Password: `password`
 
 ---
@@ -259,9 +257,7 @@ trungduongservice-v3/
 ## 📞 Support
 
 Nếu cần hỗ trợ, vui lòng liên hệ:
-- 📞 Hotline: 0976494949 | 083 7555 5000
-- 📧 Email: info@trungduongservice.com
-- 📍 Địa chỉ: 436B/65 Đường 3/2, Q.10, TP.HCM
+- 📧 Email: info@hz.com
 
 ---
 
@@ -271,4 +267,4 @@ MIT License - Free to use and modify.
 
 ---
 
-**Made with ❤️ for TrungDuongService**
+**Made with ❤️ for HZ**

@@ -1,4 +1,4 @@
-# 📋 TrungDuongService v3.0 - Project Summary
+# 📋 HZ v3.0 - Project Summary
 
 ## ✅ PROJECT COMPLETED - 100% PRODUCTION READY
 
@@ -212,8 +212,8 @@ The seeder creates:
 - 3 Suppliers
 
 **Demo Credentials:**
-- Admin: `admin@trungduongservice.com` / `password`
-- Staff: `staff@trungduongservice.com` / `password`
+- Admin: `admin@hz.com` / `password`
+- Staff: `staff@hz.com` / `password`
 
 ---
 
@@ -317,10 +317,8 @@ Categories:
 
 ## 📱 Business Information
 
-**TrungDuongService**
-- 📞 Hotline: 0976494949 | 083 7555 5000
-- 📍 Address: 436B/65 Đường 3/2, Q.10, TP.HCM
-- 🌐 Domain: trungduongservice.com
+**HZ**
+- 🌐 Domain: hz.com
 - 💼 Business: Phone repair & iPhone/iPad battery sales
 
 ---
@@ -368,6 +366,6 @@ Categories:
 
 ---
 
-**Made with ❤️ for TrungDuongService**
+**Made with ❤️ for HZ**
 
 *End of Project Summary*

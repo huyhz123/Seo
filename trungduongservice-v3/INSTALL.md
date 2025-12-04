@@ -1,4 +1,4 @@
-# 📖 Hướng dẫn cài đặt TrungDuongService v3.0
+# 📖 Hướng dẫn cài đặt HZ v3.0
 
 ## 📋 Yêu cầu hệ thống
 
@@ -55,7 +55,7 @@ php artisan key:generate
 Tạo database MySQL mới:
 
 ```sql
-CREATE DATABASE trungduong_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE hz_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### Bước 6: Cấu hình .env
@@ -63,7 +63,7 @@ CREATE DATABASE trungduong_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 Mở file `.env` và cập nhật:
 
 ```env
-APP_NAME=TrungDuongService
+APP_NAME=HZ
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost:8000
@@ -71,15 +71,12 @@ APP_URL=http://localhost:8000
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=trungduong_db
+DB_DATABASE=hz_db
 DB_USERNAME=root
 DB_PASSWORD=
 
 # Business Info
-BUSINESS_NAME="TrungDuongService"
-BUSINESS_PHONE="0976494949"
-BUSINESS_PHONE_2="083 7555 5000"
-BUSINESS_ADDRESS="436B/65 Đường 3/2, Q.10, TP.HCM"
+BUSINESS_NAME="HZ"
 ```
 
 ### Bước 7: Chạy migrations và seeder
@@ -114,7 +111,7 @@ Server sẽ chạy tại: `http://localhost:8000`
 Mở trình duyệt và vào: `http://localhost:8000/login.html`
 
 **Tài khoản demo:**
-- Email: `admin@trungduongservice.com`
+- Email: `admin@hz.com`
 - Password: `password`
 
 ---
@@ -215,10 +212,10 @@ cp .env.example .env
 Sửa file `.env`:
 
 ```env
-APP_NAME=TrungDuongService
+APP_NAME=HZ
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://trungduongservice.com
+APP_URL=https://hz.com
 
 DB_CONNECTION=mysql
 DB_HOST=localhost
@@ -282,10 +279,10 @@ chmod -R 755 ~/bootstrap/cache
 
 ### Bước 11: Truy cập website
 
-Truy cập: `https://trungduongservice.com/login.html`
+Truy cập: `https://hz.com/login.html`
 
 **Đăng nhập:**
-- Email: `admin@trungduongservice.com`
+- Email: `admin@hz.com`
 - Password: `password`
 
 ---
@@ -410,9 +407,7 @@ tar -xzf backup.tar.gz
 
 Nếu gặp khó khăn trong quá trình cài đặt:
 
-- 📞 Hotline: 0976494949 | 083 7555 5000
-- 📧 Email: info@trungduongservice.com
-- 📍 Địa chỉ: 436B/65 Đường 3/2, Q.10, TP.HCM
+- 📧 Email: info@hz.com
 
 ---
 

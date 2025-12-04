@@ -194,7 +194,7 @@ php artisan key:generate
 ### Step 3: Configure Database
 Edit `.env` file:
 ```
-DB_DATABASE=trungduong_db
+DB_DATABASE=hz_db
 DB_USERNAME=root
 DB_PASSWORD=
 ```
@@ -212,7 +212,7 @@ php artisan serve
 
 ### Step 6: Login
 Open browser: http://localhost:8000/login.html
-- Email: admin@trungduongservice.com
+- Email: admin@hz.com
 - Password: password
 
 ---

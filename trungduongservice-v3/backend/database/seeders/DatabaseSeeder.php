@@ -22,18 +22,18 @@ class DatabaseSeeder extends Seeder
         $warehouse = Warehouse::create([
             'name' => 'Kho chính',
             'code' => 'WH001',
-            'address' => '436B/65 Đường 3/2, Q.10, TP.HCM',
-            'manager_name' => 'Trung Dương',
-            'phone' => '0976494949',
+            'address' => null,
+            'manager_name' => 'Admin',
+            'phone' => null,
             'is_active' => true,
         ]);
 
         // Create Admin User
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@trungduongservice.com',
+            'email' => 'admin@hz.com',
             'password' => Hash::make('password'),
-            'phone' => '0976494949',
+            'phone' => null,
             'role' => 'admin',
             'is_active' => true,
             'warehouse_id' => $warehouse->id,
@@ -42,9 +42,9 @@ class DatabaseSeeder extends Seeder
         // Create Staff User
         User::create([
             'name' => 'Nhân viên',
-            'email' => 'staff@trungduongservice.com',
+            'email' => 'staff@hz.com',
             'password' => Hash::make('password'),
-            'phone' => '083 7555 5000',
+            'phone' => null,
             'role' => 'staff',
             'is_active' => true,
             'warehouse_id' => $warehouse->id,
@@ -264,7 +264,7 @@ class DatabaseSeeder extends Seeder
         }
 
         echo "✅ Seeded successfully!\n";
-        echo "👤 Admin: admin@trungduongservice.com / password\n";
-        echo "👤 Staff: staff@trungduongservice.com / password\n";
+        echo "👤 Admin: admin@hz.com / password\n";
+        echo "👤 Staff: staff@hz.com / password\n";
     }
 }
