@@ -5,51 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - HZ</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-content">
             <div class="navbar-brand">HZ</div>
             <div class="navbar-menu">
-                <a href="/dashboard.html">Dashboard</a>
-                <a href="/products.html">Sản phẩm</a>
-                <a href="/customers.html">Khách hàng</a>
-                <a href="/suppliers.html">Nhà cung cấp</a>
-                <a href="/sales.html">Bán hàng</a>
-                <a href="/purchases.html">Mua hàng</a>
-                <a href="/debts.html">Công nợ</a>
-                <a href="/reports.html">Báo cáo</a>
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/customers.html"><i class="fas fa-users"></i> Khách hàng</a>
+                <a href="/suppliers.html"><i class="fas fa-truck"></i> Nhà cung cấp</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/purchases.html"><i class="fas fa-shopping-bag"></i> Mua hàng</a>
+                <a href="/debts.html"><i class="fas fa-money-bill-wave"></i> Công nợ</a>
+                <a href="/reports.html"><i class="fas fa-chart-bar"></i> Báo cáo</a>
                 <span id="userName" style="color: #667eea; font-weight: 600;"></span>
-                <button id="logoutBtn">Đăng xuất</button>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <h1 style="margin-bottom: 30px; color: #2c3e50;">Dashboard</h1>
+        <h1 style="margin-bottom: 30px; color: #2c3e50;"><i class="fas fa-chart-line"></i> Dashboard</h1>
 
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
-                <h3>Doanh thu tháng này</h3>
+                <h3><i class="fas fa-dollar-sign"></i> Doanh thu tháng này</h3>
                 <div class="value" id="monthlyRevenue">0 ₫</div>
             </div>
             <div class="stat-card success">
-                <h3>Số đơn hàng</h3>
+                <h3><i class="fas fa-shopping-cart"></i> Số đơn hàng</h3>
                 <div class="value" id="totalOrders">0</div>
             </div>
             <div class="stat-card danger">
-                <h3>Công nợ khách hàng</h3>
+                <h3><i class="fas fa-exclamation-triangle"></i> Công nợ khách hàng</h3>
                 <div class="value" id="customerDebts">0 ₫</div>
             </div>
             <div class="stat-card warning">
-                <h3>Sản phẩm sắp hết</h3>
+                <h3><i class="fas fa-box-open"></i> Sản phẩm sắp hết</h3>
                 <div class="value" id="lowStockProducts">0</div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h2>Đơn hàng gần đây</h2>
+                <h2><i class="fas fa-receipt"></i> Đơn hàng gần đây</h2>
+                <a href="/orders.html" class="btn btn-primary"><i class="fas fa-eye"></i> Xem tất cả</a>
             </div>
             <div class="card-body">
                 <div class="table-container">
@@ -73,7 +75,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h2>Cảnh báo</h2>
+                <h2><i class="fas fa-bell"></i> Cảnh báo</h2>
             </div>
             <div class="card-body" id="alertsContainer">
                 <p class="loading">Đang tải...</p>
