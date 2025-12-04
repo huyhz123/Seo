@@ -194,56 +194,86 @@ body {
 .btn {
     padding: 12px 24px;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-primary {
-    background: #3498db;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .btn-primary:hover {
-    background: #2980b9;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-success {
-    background: #27ae60;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
 }
 
 .btn-success:hover {
-    background: #229954;
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-danger {
-    background: #e74c3c;
+    background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(238, 9, 121, 0.3);
 }
 
 .btn-danger:hover {
-    background: #c0392b;
+    box-shadow: 0 6px 20px rgba(238, 9, 121, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-warning {
-    background: #f39c12;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
 }
 
 .btn-warning:hover {
-    background: #e67e22;
+    box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.btn-info:hover {
+    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-sm {
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 12px;
+    border-radius: 8px;
 }
 
 .btn-block {
     width: 100%;
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 /* Tables */
@@ -463,23 +493,132 @@ table tbody tr:hover {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .navbar-menu {
+        gap: 3px;
+    }
+
+    .navbar-menu a {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-content {
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
+    }
+
+    .navbar-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .navbar-menu a {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .navbar-menu a i {
+        display: none;
+    }
+
+    .navbar-menu button {
+        width: 100%;
     }
 
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .card-header h2 {
+        font-size: 20px;
     }
 
     table {
-        font-size: 12px;
+        font-size: 11px;
     }
 
     table th,
     table td {
-        padding: 8px;
+        padding: 6px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .container h1 {
+        font-size: 22px;
+        padding: 15px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-brand {
+        font-size: 24px;
+    }
+
+    .navbar-menu a span {
+        display: none;
+    }
+
+    .stats-grid {
+        gap: 10px;
+    }
+
+    .stat-card .value {
+        font-size: 24px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
     }
 }
 
