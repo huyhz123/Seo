@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt hệ thống - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/branches.html"><i class="fas fa-building"></i> Chi nhánh</a>
+                <a href="/staff.html"><i class="fas fa-user-tie"></i> Nhân viên</a>
+                <a href="/currencies.html"><i class="fas fa-dollar-sign"></i> Tỷ giá</a>
+                <a href="/stocktake.html"><i class="fas fa-clipboard-check"></i> Kiểm kê</a>
+                <a href="/backup.html"><i class="fas fa-database"></i> Sao lưu</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Cài đặt</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="margin-bottom: 30px; color: #2c3e50;"><i class="fas fa-cog"></i> Cài đặt hệ thống</h1>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <!-- General Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-building"></i> Thông tin doanh nghiệp</h2>
+                </div>
+                <div class="card-body">
+                    <form id="businessForm">
+                        <div class="form-group">
+                            <label>Tên doanh nghiệp</label>
+                            <input type="text" id="businessName" value="HZ Store">
+                        </div>
+                        <div class="form-group">
+                            <label>Mã số thuế</label>
+                            <input type="text" id="taxCode" placeholder="0123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ</label>
+                            <textarea id="businessAddress" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Điện thoại</label>
+                            <input type="text" id="businessPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="businessEmail">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Lưu thông tin
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Invoice Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-file-invoice"></i> Cài đặt hóa đơn</h2>
+                </div>
+                <div class="card-body">
+                    <form id="invoiceForm">
+                        <div class="form-group">
+                            <label>Tiền tố mã hóa đơn</label>
+                            <input type="text" id="invoicePrefix" value="HD" maxlength="5">
+                            <small>VD: HD0001, HD0002...</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Số bắt đầu</label>
+                            <input type="number" id="invoiceStart" value="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Định dạng số</label>
+                            <select id="invoiceFormat">
+                                <option value="4">0001 (4 chữ số)</option>
+                                <option value="5">00001 (5 chữ số)</option>
+                                <option value="6">000001 (6 chữ số)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Footer hóa đơn</label>
+                            <textarea id="invoiceFooter" rows="3" placeholder="Cảm ơn quý khách..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showTax" checked>
+                                Hiển thị thuế VAT
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showDiscount" checked>
+                                Hiển thị giảm giá
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Lưu cài đặt
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- System Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-sliders-h"></i> Cài đặt hệ thống</h2>
+                </div>
+                <div class="card-body">
+                    <form id="systemForm">
+                        <div class="form-group">
+                            <label>Tiền tệ mặc định</label>
+                            <select id="defaultCurrency">
+                                <option value="VND" selected>VND (₫)</option>
+                                <option value="USD">USD ($)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Số lượng sản phẩm/trang</label>
+                            <input type="number" id="itemsPerPage" value="20" min="10" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Ngưỡng cảnh báo tồn kho</label>
+                            <input type="number" id="lowStockThreshold" value="5" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Múi giờ</label>
+                            <select id="timezone">
+                                <option value="Asia/Ho_Chi_Minh" selected>Việt Nam (GMT+7)</option>
+                                <option value="Asia/Bangkok">Bangkok (GMT+7)</option>
+                                <option value="Asia/Singapore">Singapore (GMT+8)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableNotifications" checked>
+                                Bật thông báo
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="autoBackup">
+                                Tự động sao lưu hàng ngày
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Lưu cài đặt
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Permissions Template -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-shield-alt"></i> Mẫu phân quyền</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label><strong>Admin - Toàn quyền</strong></label>
+                        <ul style="font-size: 13px; line-height: 1.8;">
+                            <li>✅ Xem tất cả</li>
+                            <li>✅ Thêm, sửa, xóa</li>
+                            <li>✅ Quản lý nhân viên</li>
+                            <li>✅ Xem báo cáo tài chính</li>
+                            <li>✅ Cài đặt hệ thống</li>
+                            <li>✅ Sao lưu dữ liệu</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label><strong>Staff - Nhân viên</strong></label>
+                        <ul style="font-size: 13px; line-height: 1.8;">
+                            <li>✅ Xem sản phẩm, khách hàng</li>
+                            <li>✅ Bán hàng, nhập hàng</li>
+                            <li>✅ Xem công nợ</li>
+                            <li>❌ Xóa dữ liệu quan trọng</li>
+                            <li>❌ Xem báo cáo chi tiết</li>
+                            <li>❌ Cài đặt hệ thống</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label><strong>Viewer - Chỉ xem</strong></label>
+                        <ul style="font-size: 13px; line-height: 1.8;">
+                            <li>✅ Xem sản phẩm</li>
+                            <li>✅ Xem đơn hàng</li>
+                            <li>❌ Thêm, sửa, xóa</li>
+                            <li>❌ Bán hàng</li>
+                            <li>❌ Xem báo cáo</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-info-circle"></i> Thông tin hệ thống</h2>
+                </div>
+                <div class="card-body">
+                    <div style="line-height: 2;">
+                        <p><strong>Tên hệ thống:</strong> HZ Management System</p>
+                        <p><strong>Phiên bản:</strong> 3.5.0</p>
+                        <p><strong>Laravel:</strong> 11.x</p>
+                        <p><strong>PHP:</strong> 8.2+</p>
+                        <p><strong>Database:</strong> MySQL</p>
+                        <p><strong>Frontend:</strong> Pure HTML/CSS/JS</p>
+                        <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <strong>Tính năng:</strong><br>
+                            • Quản lý bán hàng<br>
+                            • Quản lý kho<br>
+                            • Công nợ<br>
+                            • Báo cáo<br>
+                            • Đa chi nhánh<br>
+                            • Đa tiền tệ<br>
+                            • Phân quyền<br>
+                            • Sao lưu dữ liệu
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-bolt"></i> Thao tác nhanh</h2>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success btn-block" onclick="window.location.href='/branches.html'">
+                        <i class="fas fa-building"></i> Quản lý chi nhánh
+                    </button>
+                    <button class="btn btn-info btn-block" onclick="window.location.href='/currencies.html'" style="margin-top: 10px;">
+                        <i class="fas fa-dollar-sign"></i> Quản lý tỷ giá
+                    </button>
+                    <button class="btn btn-warning btn-block" onclick="window.location.href='/stocktake.html'" style="margin-top: 10px;">
+                        <i class="fas fa-clipboard-check"></i> Kiểm kê kho
+                    </button>
+                    <button class="btn btn-primary btn-block" onclick="window.location.href='/backup.html'" style="margin-top: 10px;">
+                        <i class="fas fa-database"></i> Sao lưu dữ liệu
+                    </button>
+                    <button class="btn btn-danger btn-block" onclick="clearCache()" style="margin-top: 10px;">
+                        <i class="fas fa-trash"></i> Xóa cache
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Load settings from localStorage
+        const loadSettings = () => {
+            const settings = JSON.parse(localStorage.getItem('systemSettings') || '{}');
+
+            if (settings.businessName) document.getElementById('businessName').value = settings.businessName;
+            if (settings.taxCode) document.getElementById('taxCode').value = settings.taxCode;
+            if (settings.businessAddress) document.getElementById('businessAddress').value = settings.businessAddress;
+            if (settings.businessPhone) document.getElementById('businessPhone').value = settings.businessPhone;
+            if (settings.businessEmail) document.getElementById('businessEmail').value = settings.businessEmail;
+
+            if (settings.invoicePrefix) document.getElementById('invoicePrefix').value = settings.invoicePrefix;
+            if (settings.invoiceStart) document.getElementById('invoiceStart').value = settings.invoiceStart;
+            if (settings.invoiceFormat) document.getElementById('invoiceFormat').value = settings.invoiceFormat;
+            if (settings.invoiceFooter) document.getElementById('invoiceFooter').value = settings.invoiceFooter;
+            if (settings.showTax !== undefined) document.getElementById('showTax').checked = settings.showTax;
+            if (settings.showDiscount !== undefined) document.getElementById('showDiscount').checked = settings.showDiscount;
+
+            if (settings.defaultCurrency) document.getElementById('defaultCurrency').value = settings.defaultCurrency;
+            if (settings.itemsPerPage) document.getElementById('itemsPerPage').value = settings.itemsPerPage;
+            if (settings.lowStockThreshold) document.getElementById('lowStockThreshold').value = settings.lowStockThreshold;
+            if (settings.timezone) document.getElementById('timezone').value = settings.timezone;
+            if (settings.enableNotifications !== undefined) document.getElementById('enableNotifications').checked = settings.enableNotifications;
+            if (settings.autoBackup !== undefined) document.getElementById('autoBackup').checked = settings.autoBackup;
+        };
+
+        // Save business settings
+        document.getElementById('businessForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const settings = JSON.parse(localStorage.getItem('systemSettings') || '{}');
+            settings.businessName = document.getElementById('businessName').value;
+            settings.taxCode = document.getElementById('taxCode').value;
+            settings.businessAddress = document.getElementById('businessAddress').value;
+            settings.businessPhone = document.getElementById('businessPhone').value;
+            settings.businessEmail = document.getElementById('businessEmail').value;
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            showAlert('Đã lưu thông tin doanh nghiệp!', 'success');
+        });
+
+        // Save invoice settings
+        document.getElementById('invoiceForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const settings = JSON.parse(localStorage.getItem('systemSettings') || '{}');
+            settings.invoicePrefix = document.getElementById('invoicePrefix').value;
+            settings.invoiceStart = document.getElementById('invoiceStart').value;
+            settings.invoiceFormat = document.getElementById('invoiceFormat').value;
+            settings.invoiceFooter = document.getElementById('invoiceFooter').value;
+            settings.showTax = document.getElementById('showTax').checked;
+            settings.showDiscount = document.getElementById('showDiscount').checked;
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            showAlert('Đã lưu cài đặt hóa đơn!', 'success');
+        });
+
+        // Save system settings
+        document.getElementById('systemForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const settings = JSON.parse(localStorage.getItem('systemSettings') || '{}');
+            settings.defaultCurrency = document.getElementById('defaultCurrency').value;
+            settings.itemsPerPage = document.getElementById('itemsPerPage').value;
+            settings.lowStockThreshold = document.getElementById('lowStockThreshold').value;
+            settings.timezone = document.getElementById('timezone').value;
+            settings.enableNotifications = document.getElementById('enableNotifications').checked;
+            settings.autoBackup = document.getElementById('autoBackup').checked;
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            showAlert('Đã lưu cài đặt hệ thống!', 'success');
+        });
+
+        const clearCache = () => {
+            if (confirm('Xóa cache sẽ làm mới toàn bộ dữ liệu tạm. Tiếp tục?')) {
+                localStorage.removeItem('cachedData');
+                sessionStorage.clear();
+                showAlert('Đã xóa cache thành công!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html>
