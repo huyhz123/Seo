@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="margin-bottom: 30px; color: #2c3e50;">Dashboard</h1>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Doanh thu tháng này</h3>
+                <div class="value" id="monthlyRevenue">0 ₫</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Số đơn hàng</h3>
+                <div class="value" id="totalOrders">0</div>
+            </div>
+            <div class="stat-card danger">
+                <h3>Công nợ khách hàng</h3>
+                <div class="value" id="customerDebts">0 ₫</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Sản phẩm sắp hết</h3>
+                <div class="value" id="lowStockProducts">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Đơn hàng gần đây</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table id="recentOrdersTable">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                            <tr><td colspan="5" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Cảnh báo</h2>
+            </div>
+            <div class="card-body" id="alertsContainer">
+                <p class="loading">Đang tải...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadDashboard = async () => {
+            try {
+                const data = await apiRequest('/dashboard');
+
+                if (data && data.success) {
+                    const { overview, recent_orders } = data.data;
+
+                    // Update stats
+                    document.getElementById('monthlyRevenue').textContent = formatCurrency(overview.total_revenue);
+                    document.getElementById('totalOrders').textContent = overview.total_sales;
+                    document.getElementById('customerDebts').textContent = formatCurrency(overview.customer_debts);
+                    document.getElementById('lowStockProducts').textContent = overview.low_stock_products;
+
+                    // Update recent orders
+                    const tbody = document.getElementById('recentOrdersBody');
+                    if (recent_orders && recent_orders.length > 0) {
+                        tbody.innerHTML = recent_orders.map(order => `
+                            <tr>
+                                <td>${order.order_number}</td>
+                                <td>${order.customer.name}</td>
+                                <td>${formatDate(order.order_date)}</td>
+                                <td>${formatCurrency(order.total)}</td>
+                                <td><span class="badge badge-${order.status === 'completed' ? 'success' : 'warning'}">${order.status}</span></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Không có đơn hàng</td></tr>';
+                    }
+                }
+
+                // Load alerts
+                const alertsData = await apiRequest('/dashboard/alerts');
+                if (alertsData && alertsData.success) {
+                    const alertsContainer = document.getElementById('alertsContainer');
+                    if (alertsData.data.length > 0) {
+                        alertsContainer.innerHTML = alertsData.data.map(alert => `
+                            <div class="alert alert-${alert.severity}">
+                                ${alert.message}
+                            </div>
+                        `).join('');
+                    } else {
+                        alertsContainer.innerHTML = '<p style="color: #27ae60;">✅ Không có cảnh báo</p>';
+                    }
+                }
+            } catch (error) {
+                showAlert('Lỗi khi tải dashboard: ' + error.message, 'danger');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>

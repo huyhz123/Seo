@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #3498db;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Quản lý sản phẩm</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Thêm sản phẩm</button>
+            </div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm...">
+                    <button class="btn btn-primary" onclick="loadProducts()">Tìm</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Thương hiệu</th>
+                                <th>Giá bán</th>
+                                <th>Tồn kho</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody">
+                            <tr><td colspan="7" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm sản phẩm</h2>
+                <button class="modal-close" onclick="closeModal('productModal')">&times;</button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label>Tên sản phẩm *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Mã sản phẩm *</label>
+                    <input type="text" id="productCode" required>
+                </div>
+                <div class="form-group">
+                    <label>Barcode</label>
+                    <input type="text" id="productBarcode">
+                </div>
+                <div class="form-group">
+                    <label>Danh mục *</label>
+                    <select id="categoryId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Thương hiệu *</label>
+                    <select id="brandId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Đơn vị tính *</label>
+                    <select id="unitId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Giá nhập *</label>
+                    <input type="number" id="purchasePrice" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Giá bán *</label>
+                    <input type="number" id="sellingPrice" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Tồn kho tối thiểu</label>
+                    <input type="number" id="minStock" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea id="description"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-block">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let formData = {};
+
+        const loadProducts = async () => {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const data = await apiRequest(`/products?search=${search}&per_page=50`);
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('productsBody');
+                    if (data.data.data.length > 0) {
+                        tbody.innerHTML = data.data.data.map(p => `
+                            <tr>
+                                <td>${p.code}</td>
+                                <td>${p.name}</td>
+                                <td>${p.category.name}</td>
+                                <td>${p.brand.name}</td>
+                                <td>${formatCurrency(p.selling_price)}</td>
+                                <td>${p.inventory ? p.inventory.reduce((sum, inv) => sum + inv.quantity, 0) : 0}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editProduct(${p.id})">Sửa</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">Xóa</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có sản phẩm</td></tr>';
+                    }
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const loadFormData = async () => {
+            try {
+                const data = await apiRequest('/products/form-data');
+                if (data && data.success) {
+                    formData = data.data;
+
+                    document.getElementById('categoryId').innerHTML = formData.categories.map(c =>
+                        `<option value="${c.id}">${c.name}</option>`
+                    ).join('');
+
+                    document.getElementById('brandId').innerHTML = formData.brands.map(b =>
+                        `<option value="${b.id}">${b.name}</option>`
+                    ).join('');
+
+                    document.getElementById('unitId').innerHTML = formData.units.map(u =>
+                        `<option value="${u.id}">${u.name}</option>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('Error loading form data:', error);
+            }
+        };
+
+        const openAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm sản phẩm';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            openModal('productModal');
+        };
+
+        const editProduct = async (id) => {
+            try {
+                const data = await apiRequest(`/products/${id}`);
+                if (data && data.success) {
+                    const p = data.data;
+                    document.getElementById('modalTitle').textContent = 'Sửa sản phẩm';
+                    document.getElementById('productId').value = p.id;
+                    document.getElementById('productName').value = p.name;
+                    document.getElementById('productCode').value = p.code;
+                    document.getElementById('productBarcode').value = p.barcode || '';
+                    document.getElementById('categoryId').value = p.category_id;
+                    document.getElementById('brandId').value = p.brand_id;
+                    document.getElementById('unitId').value = p.unit_id;
+                    document.getElementById('purchasePrice').value = p.purchase_price;
+                    document.getElementById('sellingPrice').value = p.selling_price;
+                    document.getElementById('minStock').value = p.min_stock;
+                    document.getElementById('description').value = p.description || '';
+                    openModal('productModal');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const deleteProduct = async (id) => {
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+
+            try {
+                const data = await apiRequest(`/products/${id}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    showAlert('Xóa sản phẩm thành công!', 'success');
+                    loadProducts();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('productId').value;
+            const payload = {
+                name: document.getElementById('productName').value,
+                code: document.getElementById('productCode').value,
+                barcode: document.getElementById('productBarcode').value || null,
+                category_id: document.getElementById('categoryId').value,
+                brand_id: document.getElementById('brandId').value,
+                unit_id: document.getElementById('unitId').value,
+                purchase_price: document.getElementById('purchasePrice').value,
+                selling_price: document.getElementById('sellingPrice').value,
+                min_stock: document.getElementById('minStock').value,
+                description: document.getElementById('description').value,
+            };
+
+            try {
+                const url = id ? `/products/${id}` : '/products';
+                const method = id ? 'PUT' : 'POST';
+
+                const data = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(payload),
+                });
+
+                if (data && data.success) {
+                    showAlert(data.message, 'success');
+                    closeModal('productModal');
+                    loadProducts();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFormData();
+            loadProducts();
+        });
+    </script>
+</body>
+</html>

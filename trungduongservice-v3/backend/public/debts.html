@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý công nợ - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #3498db;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card danger">
+                <h3>Công nợ khách hàng</h3>
+                <div class="value" id="customerDebtsTotal">0 ₫</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Công nợ nhà cung cấp</h3>
+                <div class="value" id="supplierDebtsTotal">0 ₫</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Công nợ khách hàng</h2>
+                <button class="btn btn-primary" onclick="openPaymentModal('customer')">Thanh toán</button>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Số tiền</th>
+                                <th>Đã thanh toán</th>
+                                <th>Còn lại</th>
+                                <th>Trạng thái</th>
+                                <th>Hạn thanh toán</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerDebtsBody">
+                            <tr><td colspan="6" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Công nợ nhà cung cấp</h2>
+                <button class="btn btn-primary" onclick="openPaymentModal('supplier')">Thanh toán</button>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nhà cung cấp</th>
+                                <th>Số tiền</th>
+                                <th>Đã thanh toán</th>
+                                <th>Còn lại</th>
+                                <th>Trạng thái</th>
+                                <th>Hạn thanh toán</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierDebtsBody">
+                            <tr><td colspan="6" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="paymentModalTitle">Thanh toán công nợ</h2>
+                <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+            </div>
+            <form id="paymentForm">
+                <input type="hidden" id="debtType">
+                <div class="form-group">
+                    <label>Chọn công nợ *</label>
+                    <select id="debtId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Số tiền thanh toán *</label>
+                    <input type="number" id="paymentAmount" required min="0">
+                </div>
+                <div class="form-group">
+                    <label>Ngày thanh toán *</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Phương thức thanh toán *</label>
+                    <select id="paymentMethod" required>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="bank_transfer">Chuyển khoản</option>
+                        <option value="credit_card">Thẻ tín dụng</option>
+                        <option value="other">Khác</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea id="paymentNotes"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-block">Thanh toán</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let currentDebts = [];
+
+        const loadDebts = async () => {
+            try {
+                const [statsData, customerDebtsData, supplierDebtsData] = await Promise.all([
+                    apiRequest('/debts/stats'),
+                    apiRequest('/debts/customer'),
+                    apiRequest('/debts/supplier')
+                ]);
+
+                if (statsData && statsData.success) {
+                    document.getElementById('customerDebtsTotal').textContent = formatCurrency(statsData.data.customer_debts);
+                    document.getElementById('supplierDebtsTotal').textContent = formatCurrency(statsData.data.supplier_debts);
+                }
+
+                if (customerDebtsData && customerDebtsData.success) {
+                    const tbody = document.getElementById('customerDebtsBody');
+                    if (customerDebtsData.data.data.length > 0) {
+                        tbody.innerHTML = customerDebtsData.data.data.map(d => `
+                            <tr>
+                                <td>${d.customer.name}</td>
+                                <td>${formatCurrency(d.amount)}</td>
+                                <td>${formatCurrency(d.paid_amount)}</td>
+                                <td style="color: #e74c3c;">${formatCurrency(d.remaining_amount)}</td>
+                                <td><span class="badge badge-${d.status === 'overdue' ? 'danger' : 'warning'}">${d.status}</span></td>
+                                <td>${d.due_date ? formatDate(d.due_date) : '-'}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có công nợ</td></tr>';
+                    }
+                }
+
+                if (supplierDebtsData && supplierDebtsData.success) {
+                    const tbody = document.getElementById('supplierDebtsBody');
+                    if (supplierDebtsData.data.data.length > 0) {
+                        tbody.innerHTML = supplierDebtsData.data.data.map(d => `
+                            <tr>
+                                <td>${d.supplier.name}</td>
+                                <td>${formatCurrency(d.amount)}</td>
+                                <td>${formatCurrency(d.paid_amount)}</td>
+                                <td style="color: #e74c3c;">${formatCurrency(d.remaining_amount)}</td>
+                                <td><span class="badge badge-${d.status === 'overdue' ? 'danger' : 'warning'}">${d.status}</span></td>
+                                <td>${d.due_date ? formatDate(d.due_date) : '-'}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có công nợ</td></tr>';
+                    }
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const openPaymentModal = async (type) => {
+            try {
+                const endpoint = type === 'customer' ? '/debts/customer' : '/debts/supplier';
+                const data = await apiRequest(endpoint);
+
+                if (data && data.success) {
+                    currentDebts = data.data.data.filter(d => d.remaining_amount > 0);
+                    document.getElementById('debtType').value = type;
+                    document.getElementById('paymentModalTitle').textContent = `Thanh toán công nợ ${type === 'customer' ? 'khách hàng' : 'nhà cung cấp'}`;
+
+                    const select = document.getElementById('debtId');
+                    select.innerHTML = currentDebts.map(d => {
+                        const name = type === 'customer' ? d.customer.name : d.supplier.name;
+                        return `<option value="${d.id}">${name} - ${formatCurrency(d.remaining_amount)}</option>`;
+                    }).join('');
+
+                    document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+                    openModal('paymentModal');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                debt_type: document.getElementById('debtType').value,
+                debt_id: document.getElementById('debtId').value,
+                amount: document.getElementById('paymentAmount').value,
+                payment_date: document.getElementById('paymentDate').value,
+                payment_method: document.getElementById('paymentMethod').value,
+                notes: document.getElementById('paymentNotes').value,
+            };
+
+            try {
+                const data = await apiRequest('/debts/payment', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
+
+                if (data && data.success) {
+                    showAlert('Thanh toán thành công!', 'success');
+                    closeModal('paymentModal');
+                    loadDebts();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadDebts);
+    </script>
+</body>
+</html>

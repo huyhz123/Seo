@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhà cung cấp - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/products.html">Sản phẩm</a>
+                <a href="/customers.html">Khách hàng</a>
+                <a href="/suppliers.html">Nhà cung cấp</a>
+                <a href="/sales.html">Bán hàng</a>
+                <a href="/purchases.html">Mua hàng</a>
+                <a href="/debts.html">Công nợ</a>
+                <a href="/reports.html">Báo cáo</a>
+                <span id="userName" style="color: #3498db;"></span>
+                <button id="logoutBtn">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Quản lý nhà cung cấp</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Thêm nhà cung cấp</button>
+            </div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm nhà cung cấp...">
+                    <button class="btn btn-primary" onclick="loadSuppliers()">Tìm</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã NCC</th>
+                                <th>Tên nhà cung cấp</th>
+                                <th>Số điện thoại</th>
+                                <th>Email</th>
+                                <th>Công nợ</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliersBody">
+                            <tr><td colspan="6" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm nhà cung cấp</h2>
+                <button class="modal-close" onclick="closeModal('supplierModal')">&times;</button>
+            </div>
+            <form id="supplierForm">
+                <input type="hidden" id="supplierId">
+                <div class="form-group">
+                    <label>Tên nhà cung cấp *</label>
+                    <input type="text" id="supplierName" required>
+                </div>
+                <div class="form-group">
+                    <label>Mã NCC *</label>
+                    <input type="text" id="supplierCode" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="supplierPhone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="supplierEmail">
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <textarea id="supplierAddress"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success btn-block">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadSuppliers = async () => {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const data = await apiRequest(`/suppliers?search=${search}&per_page=50`);
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('suppliersBody');
+                    if (data.data.data.length > 0) {
+                        tbody.innerHTML = data.data.data.map(s => `
+                            <tr>
+                                <td>${s.code}</td>
+                                <td>${s.name}</td>
+                                <td>${s.phone || '-'}</td>
+                                <td>${s.email || '-'}</td>
+                                <td style="color: ${s.total_debt > 0 ? '#e74c3c' : '#27ae60'}">${formatCurrency(s.total_debt)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editSupplier(${s.id})">Sửa</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteSupplier(${s.id})">Xóa</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có nhà cung cấp</td></tr>';
+                    }
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const openAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm nhà cung cấp';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierId').value = '';
+            openModal('supplierModal');
+        };
+
+        const editSupplier = async (id) => {
+            try {
+                const data = await apiRequest(`/suppliers/${id}`);
+                if (data && data.success) {
+                    const s = data.data;
+                    document.getElementById('modalTitle').textContent = 'Sửa nhà cung cấp';
+                    document.getElementById('supplierId').value = s.id;
+                    document.getElementById('supplierName').value = s.name;
+                    document.getElementById('supplierCode').value = s.code;
+                    document.getElementById('supplierPhone').value = s.phone || '';
+                    document.getElementById('supplierEmail').value = s.email || '';
+                    document.getElementById('supplierAddress').value = s.address || '';
+                    openModal('supplierModal');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const deleteSupplier = async (id) => {
+            if (!confirm('Bạn có chắc muốn xóa nhà cung cấp này?')) return;
+
+            try {
+                const data = await apiRequest(`/suppliers/${id}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    showAlert('Xóa nhà cung cấp thành công!', 'success');
+                    loadSuppliers();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('supplierForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('supplierId').value;
+            const payload = {
+                name: document.getElementById('supplierName').value,
+                code: document.getElementById('supplierCode').value,
+                phone: document.getElementById('supplierPhone').value,
+                email: document.getElementById('supplierEmail').value,
+                address: document.getElementById('supplierAddress').value,
+            };
+
+            try {
+                const url = id ? `/suppliers/${id}` : '/suppliers';
+                const method = id ? 'PUT' : 'POST';
+
+                const data = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(payload),
+                });
+
+                if (data && data.success) {
+                    showAlert(data.message, 'success');
+                    closeModal('supplierModal');
+                    loadSuppliers();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadSuppliers);
+    </script>
+</body>
+</html>
