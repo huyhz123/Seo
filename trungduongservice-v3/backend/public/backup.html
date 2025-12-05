@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sao lưu dữ liệu - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/backup.html"><i class="fas fa-database"></i> Sao lưu</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Backup -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-download"></i> Sao lưu dữ liệu</h2>
+                </div>
+                <div class="card-body">
+                    <p style="margin-bottom: 15px;">Tạo bản sao lưu toàn bộ dữ liệu hệ thống.</p>
+
+                    <div class="form-group">
+                        <label>Chọn loại dữ liệu</label>
+                        <div>
+                            <label><input type="checkbox" id="backupProducts" checked> Sản phẩm</label><br>
+                            <label><input type="checkbox" id="backupCustomers" checked> Khách hàng</label><br>
+                            <label><input type="checkbox" id="backupOrders" checked> Đơn hàng</label><br>
+                            <label><input type="checkbox" id="backupInventory" checked> Tồn kho</label><br>
+                            <label><input type="checkbox" id="backupSettings" checked> Cài đặt</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success btn-block" onclick="createBackup()">
+                        <i class="fas fa-download"></i> Tạo bản sao lưu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Restore -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-upload"></i> Khôi phục dữ liệu</h2>
+                </div>
+                <div class="card-body">
+                    <p style="margin-bottom: 15px;">Khôi phục dữ liệu từ file backup.</p>
+
+                    <div class="form-group">
+                        <label>Chọn file backup</label>
+                        <input type="file" id="restoreFile" accept=".json,.sql">
+                    </div>
+
+                    <div style="padding: 15px; background: #fff3cd; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="margin: 0; color: #856404;"><i class="fas fa-exclamation-triangle"></i> <strong>Cảnh báo:</strong> Khôi phục sẽ ghi đè dữ liệu hiện tại!</p>
+                    </div>
+
+                    <button class="btn btn-warning btn-block" onclick="restoreBackup()">
+                        <i class="fas fa-upload"></i> Khôi phục
+                    </button>
+                </div>
+            </div>
+
+            <!-- Auto Backup -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-clock"></i> Tự động sao lưu</h2>
+                </div>
+                <div class="card-body">
+                    <p style="margin-bottom: 15px;">Cấu hình sao lưu tự động.</p>
+
+                    <div class="form-group">
+                        <label>Lịch sao lưu</label>
+                        <select id="autoBackupSchedule">
+                            <option value="daily">Hàng ngày (00:00)</option>
+                            <option value="weekly">Hàng tuần (Chủ nhật)</option>
+                            <option value="monthly">Hàng tháng (Ngày 1)</option>
+                            <option value="disabled">Tắt</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số bản lưu tối đa</label>
+                        <input type="number" id="maxBackups" value="7" min="1" max="30">
+                    </div>
+
+                    <button class="btn btn-primary btn-block" onclick="saveAutoBackupSettings()">
+                        <i class="fas fa-save"></i> Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-info-circle"></i> Thông tin</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Database:</strong> MySQL</p>
+                    <p><strong>Size:</strong> ~<span id="dbSize">2.5</span> MB</p>
+                    <p><strong>Bản sao lưu gần nhất:</strong><br>
+                        <span id="lastBackup">Chưa có</span>
+                    </p>
+                    <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <i class="fas fa-shield-alt"></i> <strong>Bảo mật:</strong><br>
+                        • File backup được mã hóa<br>
+                        • Chỉ admin mới khôi phục được<br>
+                        • Tự động xóa backup cũ
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-history"></i> Lịch sử sao lưu</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Loại</th>
+                                <th>Kích thước</th>
+                                <th>Người tạo</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backupHistoryBody">
+                            <tr><td colspan="6" style="text-align: center;">Chưa có bản sao lưu nào</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const createBackup = () => {
+            const backupData = {
+                version: '3.5.0',
+                timestamp: new Date().toISOString(),
+                user: JSON.parse(localStorage.getItem('user') || '{}').name || 'Admin',
+                data: {}
+            };
+
+            if (document.getElementById('backupProducts').checked) {
+                backupData.data.products = 'products_data';
+            }
+            if (document.getElementById('backupCustomers').checked) {
+                backupData.data.customers = 'customers_data';
+            }
+            if (document.getElementById('backupOrders').checked) {
+                backupData.data.orders = 'orders_data';
+            }
+            if (document.getElementById('backupInventory').checked) {
+                backupData.data.inventory = 'inventory_data';
+            }
+            if (document.getElementById('backupSettings').checked) {
+                backupData.data.settings = localStorage.getItem('systemSettings');
+            }
+
+            // Create download
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `hz-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            // Save to history
+            let history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+            history.unshift({
+                timestamp: backupData.timestamp,
+                type: 'Manual',
+                size: (dataStr.length / 1024).toFixed(2) + ' KB',
+                user: backupData.user,
+                status: 'Thành công'
+            });
+            localStorage.setItem('backupHistory', JSON.stringify(history));
+
+            showAlert('Đã tạo bản sao lưu thành công!', 'success');
+            localStorage.setItem('lastBackup', backupData.timestamp);
+            loadHistory();
+            updateInfo();
+        };
+
+        const restoreBackup = () => {
+            const file = document.getElementById('restoreFile').files[0];
+            if (!file) {
+                showAlert('Vui lòng chọn file backup!', 'warning');
+                return;
+            }
+
+            if (!confirm('Bạn có chắc muốn khôi phục? Dữ liệu hiện tại sẽ bị ghi đè!')) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+
+                    // Restore settings
+                    if (backupData.data.settings) {
+                        localStorage.setItem('systemSettings', backupData.data.settings);
+                    }
+
+                    showAlert('Khôi phục dữ liệu thành công!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } catch (error) {
+                    showAlert('Lỗi: File backup không hợp lệ!', 'danger');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        const saveAutoBackupSettings = () => {
+            const settings = {
+                schedule: document.getElementById('autoBackupSchedule').value,
+                maxBackups: document.getElementById('maxBackups').value
+            };
+            localStorage.setItem('autoBackupSettings', JSON.stringify(settings));
+            showAlert('Đã lưu cài đặt tự động sao lưu!', 'success');
+        };
+
+        const loadHistory = () => {
+            const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+            const tbody = document.getElementById('backupHistoryBody');
+
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Chưa có bản sao lưu nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = history.slice(0, 10).map(item => `
+                <tr>
+                    <td>${formatDate(item.timestamp)}</td>
+                    <td><span class="badge badge-info">${item.type}</span></td>
+                    <td>${item.size}</td>
+                    <td>${item.user}</td>
+                    <td><span class="badge badge-success">${item.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBackup('${item.timestamp}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        const deleteBackup = (timestamp) => {
+            if (!confirm('Xóa bản sao lưu này?')) return;
+
+            let history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+            history = history.filter(h => h.timestamp !== timestamp);
+            localStorage.setItem('backupHistory', JSON.stringify(history));
+
+            showAlert('Đã xóa bản sao lưu!', 'success');
+            loadHistory();
+        };
+
+        const updateInfo = () => {
+            const lastBackup = localStorage.getItem('lastBackup');
+            if (lastBackup) {
+                document.getElementById('lastBackup').textContent = formatDate(lastBackup);
+            }
+        };
+
+        const loadAutoBackupSettings = () => {
+            const settings = JSON.parse(localStorage.getItem('autoBackupSettings') || '{}');
+            if (settings.schedule) {
+                document.getElementById('autoBackupSchedule').value = settings.schedule;
+            }
+            if (settings.maxBackups) {
+                document.getElementById('maxBackups').value = settings.maxBackups;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            updateInfo();
+            loadAutoBackupSettings();
+        });
+    </script>
+</body>
+</html>

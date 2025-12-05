@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa đơn - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .invoice-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .invoice-logo h1 {
+            font-size: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .invoice-info {
+            text-align: right;
+        }
+        .invoice-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .invoice-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .invoice-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .invoice-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-summary {
+            float: right;
+            width: 300px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .summary-row.total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            border-top: 2px solid #667eea;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .invoice-footer {
+            clear: both;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #777;
+        }
+        .action-buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        @media print {
+            .action-buttons, .navbar { display: none; }
+            .invoice-container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> In hóa đơn
+        </button>
+        <button class="btn btn-success" onclick="window.location.href='/orders.html'">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </button>
+    </div>
+
+    <div class="invoice-container" id="invoiceContent">
+        <div class="invoice-header">
+            <div class="invoice-logo">
+                <h1>HZ</h1>
+                <p>Hệ thống quản lý bán hàng</p>
+            </div>
+            <div class="invoice-info">
+                <h2 style="margin: 0; color: #667eea;">HÓA ĐƠN BÁN HÀNG</h2>
+                <p style="margin: 5px 0;"><strong>Mã đơn:</strong> <span id="orderNumber"></span></p>
+                <p style="margin: 5px 0;"><strong>Ngày:</strong> <span id="orderDate"></span></p>
+            </div>
+        </div>
+
+        <div class="invoice-details">
+            <div class="invoice-section">
+                <h3><i class="fas fa-user"></i> THÔNG TIN KHÁCH HÀNG</h3>
+                <p><strong>Tên:</strong> <span id="customerName"></span></p>
+                <p><strong>Điện thoại:</strong> <span id="customerPhone"></span></p>
+                <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+                <p><strong>Địa chỉ:</strong> <span id="customerAddress"></span></p>
+            </div>
+            <div class="invoice-section">
+                <h3><i class="fas fa-warehouse"></i> THÔNG TIN BÁN HÀNG</h3>
+                <p><strong>Kho:</strong> <span id="warehouseName"></span></p>
+                <p><strong>Nhân viên:</strong> <span id="staffName"></span></p>
+                <p><strong>Trạng thái:</strong> <span id="orderStatus"></span></p>
+            </div>
+        </div>
+
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Giảm giá</th>
+                    <th>Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody id="itemsTableBody">
+            </tbody>
+        </table>
+
+        <div class="invoice-summary">
+            <div class="summary-row">
+                <span>Tạm tính:</span>
+                <span id="subtotal">0 ₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Giảm giá:</span>
+                <span id="discount">0 ₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Thuế:</span>
+                <span id="tax">0 ₫</span>
+            </div>
+            <div class="summary-row total">
+                <span>TỔNG CỘNG:</span>
+                <span id="total">0 ₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Đã trả:</span>
+                <span id="paidAmount" style="color: #27ae60;">0 ₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Còn nợ:</span>
+                <span id="remainingAmount" style="color: #e74c3c;">0 ₫</span>
+            </div>
+        </div>
+
+        <div style="clear: both;"></div>
+
+        <div style="margin-top: 30px;">
+            <h3 style="color: #667eea;"><i class="fas fa-sticky-note"></i> Ghi chú</h3>
+            <p id="notes" style="padding: 10px; background: #f5f5f5; border-radius: 5px;">-</p>
+        </div>
+
+        <div class="invoice-footer">
+            <p><strong>Cảm ơn quý khách đã mua hàng!</strong></p>
+            <p>Hệ thống HZ - Quản lý bán hàng</p>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadInvoice = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('id');
+
+            if (!orderId) {
+                showAlert('Không tìm thấy đơn hàng', 'danger');
+                setTimeout(() => window.location.href = '/orders.html', 2000);
+                return;
+            }
+
+            try {
+                const data = await apiRequest(`/sales-orders/${orderId}`);
+
+                if (data && data.success) {
+                    const order = data.data;
+
+                    // Header info
+                    document.getElementById('orderNumber').textContent = order.order_number;
+                    document.getElementById('orderDate').textContent = formatDate(order.order_date);
+
+                    // Customer info
+                    document.getElementById('customerName').textContent = order.customer.name;
+                    document.getElementById('customerPhone').textContent = order.customer.phone || '-';
+                    document.getElementById('customerEmail').textContent = order.customer.email || '-';
+                    document.getElementById('customerAddress').textContent = order.customer.address || '-';
+
+                    // Warehouse info
+                    document.getElementById('warehouseName').textContent = order.warehouse.name;
+                    document.getElementById('staffName').textContent = order.user.name;
+
+                    const statusMap = {
+                        'pending': '<span class="badge badge-warning"><i class="fas fa-clock"></i> Chờ xử lý</span>',
+                        'completed': '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Hoàn thành</span>',
+                        'cancelled': '<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Đã hủy</span>'
+                    };
+                    document.getElementById('orderStatus').innerHTML = statusMap[order.status] || order.status;
+
+                    // Items
+                    const itemsBody = document.getElementById('itemsTableBody');
+                    itemsBody.innerHTML = order.items.map((item, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.product.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${formatCurrency(item.unit_price)}</td>
+                            <td>${formatCurrency(item.discount)}</td>
+                            <td><strong>${formatCurrency(item.subtotal)}</strong></td>
+                        </tr>
+                    `).join('');
+
+                    // Summary
+                    document.getElementById('subtotal').textContent = formatCurrency(order.subtotal);
+                    document.getElementById('discount').textContent = formatCurrency(order.discount);
+                    document.getElementById('tax').textContent = formatCurrency(order.tax);
+                    document.getElementById('total').textContent = formatCurrency(order.total);
+                    document.getElementById('paidAmount').textContent = formatCurrency(order.paid_amount);
+                    document.getElementById('remainingAmount').textContent = formatCurrency(order.total - order.paid_amount);
+
+                    // Notes
+                    document.getElementById('notes').textContent = order.notes || 'Không có ghi chú';
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', loadInvoice);
+    </script>
+</body>
+</html>

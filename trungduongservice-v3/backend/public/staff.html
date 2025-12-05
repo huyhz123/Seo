@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhân viên - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="/branches.html"><i class="fas fa-building"></i> Chi nhánh</a>
+                <a href="/currencies.html"><i class="fas fa-dollar-sign"></i> Tỷ giá</a>
+                <a href="/stocktake.html"><i class="fas fa-clipboard-check"></i> Kiểm kê</a>
+                <a href="/staff.html"><i class="fas fa-user-tie"></i> Nhân viên</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-user-tie"></i> Quản lý nhân viên</h2>
+                <button class="btn btn-primary" onclick="showAddModal()">
+                    <i class="fas fa-plus"></i> Thêm nhân viên
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm theo tên, email...">
+                    <button class="btn btn-primary" onclick="loadStaff()"><i class="fas fa-search"></i> Tìm kiếm</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tên</th>
+                                <th>Email</th>
+                                <th>Điện thoại</th>
+                                <th>Vai trò</th>
+                                <th>Kho</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffTableBody">
+                            <tr><td colspan="7" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="staffModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm nhân viên</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="staffForm">
+                <input type="hidden" id="staffId">
+                <div class="form-group">
+                    <label for="name">Tên nhân viên *</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Điện thoại</label>
+                    <input type="text" id="phone">
+                </div>
+                <div class="form-group">
+                    <label for="password">Mật khẩu *</label>
+                    <input type="password" id="password" required>
+                    <small>Để trống nếu không muốn thay đổi (khi sửa)</small>
+                </div>
+                <div class="form-group">
+                    <label for="role">Vai trò *</label>
+                    <select id="role" required>
+                        <option value="admin">Admin (Toàn quyền)</option>
+                        <option value="staff" selected>Staff (Nhân viên bán hàng)</option>
+                        <option value="viewer">Viewer (Chỉ xem)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="warehouseId">Kho</label>
+                    <select id="warehouseId">
+                        <option value="1">Kho chính</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isActive" checked>
+                        Kích hoạt tài khoản
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadStaff = async () => {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const url = `/users?search=${search}`;
+                const data = await apiRequest(url);
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('staffTableBody');
+                    const users = data.data.data || data.data;
+
+                    if (users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có nhân viên nào</td></tr>';
+                        return;
+                    }
+
+                    const roleLabels = {
+                        'admin': '<span class="badge badge-danger">Admin</span>',
+                        'staff': '<span class="badge badge-success">Nhân viên</span>',
+                        'viewer': '<span class="badge badge-info">Chỉ xem</span>'
+                    };
+
+                    tbody.innerHTML = users.map(user => `
+                        <tr>
+                            <td><strong>${user.name}</strong></td>
+                            <td>${user.email}</td>
+                            <td>${user.phone || '-'}</td>
+                            <td>${roleLabels[user.role] || user.role}</td>
+                            <td>${user.warehouse ? user.warehouse.name : '-'}</td>
+                            <td>${user.is_active ? '<span class="badge badge-success">Hoạt động</span>' : '<span class="badge badge-danger">Vô hiệu hóa</span>'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editStaff(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${user.role !== 'admin' ? `
+                                    <button class="btn btn-sm btn-danger" onclick="deleteStaff(${user.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const showAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm nhân viên';
+            document.getElementById('staffForm').reset();
+            document.getElementById('staffId').value = '';
+            document.getElementById('staffModal').classList.add('show');
+        };
+
+        const editStaff = async (id) => {
+            try {
+                const data = await apiRequest(`/users/${id}`);
+                if (data && data.success) {
+                    const user = data.data;
+                    document.getElementById('modalTitle').textContent = 'Sửa nhân viên';
+                    document.getElementById('staffId').value = user.id;
+                    document.getElementById('name').value = user.name;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('phone').value = user.phone || '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').required = false;
+                    document.getElementById('role').value = user.role;
+                    document.getElementById('warehouseId').value = user.warehouse_id || '';
+                    document.getElementById('isActive').checked = user.is_active;
+                    document.getElementById('staffModal').classList.add('show');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const deleteStaff = async (id) => {
+            if (!confirm('Bạn có chắc muốn xóa nhân viên này?')) return;
+
+            try {
+                const data = await apiRequest(`/users/${id}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    showAlert('Xóa nhân viên thành công!', 'success');
+                    loadStaff();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const closeModal = () => {
+            document.getElementById('staffModal').classList.remove('show');
+        };
+
+        document.getElementById('staffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('staffId').value;
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                role: document.getElementById('role').value,
+                warehouse_id: document.getElementById('warehouseId').value,
+                is_active: document.getElementById('isActive').checked
+            };
+
+            const password = document.getElementById('password').value;
+            if (password) {
+                payload.password = password;
+            }
+
+            try {
+                const url = id ? `/users/${id}` : '/register';
+                const method = id ? 'PUT' : 'POST';
+                const data = await apiRequest(url, {
+                    method: method,
+                    body: JSON.stringify(payload)
+                });
+
+                if (data && data.success) {
+                    showAlert(id ? 'Cập nhật thành công!' : 'Thêm nhân viên thành công!', 'success');
+                    closeModal();
+                    loadStaff();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loadStaff();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadStaff);
+    </script>
+</body>
+</html>

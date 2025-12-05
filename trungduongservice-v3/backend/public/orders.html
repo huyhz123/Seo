@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="/branches.html"><i class="fas fa-building"></i> Chi nhánh</a>
+                <a href="/currencies.html"><i class="fas fa-dollar-sign"></i> Tỷ giá</a>
+                <a href="/stocktake.html"><i class="fas fa-clipboard-check"></i> Kiểm kê</a>
+                <a href="/staff.html"><i class="fas fa-user-tie"></i> Nhân viên</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-receipt"></i> Danh sách đơn hàng</h2>
+                <a href="/sales.html" class="btn btn-primary"><i class="fas fa-plus"></i> Tạo đơn mới</a>
+            </div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm theo mã đơn, khách hàng...">
+                    <button class="btn btn-primary" onclick="loadOrders()"><i class="fas fa-search"></i> Tìm kiếm</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Đã trả</th>
+                                <th>Còn nợ</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="8" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let currentPage = 1;
+
+        const loadOrders = async (page = 1) => {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const url = `/sales-orders?page=${page}&search=${search}`;
+                const data = await apiRequest(url);
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('ordersTableBody');
+                    const orders = data.data.data;
+
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Không có đơn hàng nào</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = orders.map(order => {
+                        const statusBadge = order.status === 'completed' ?
+                            '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Hoàn thành</span>' :
+                            order.status === 'pending' ?
+                            '<span class="badge badge-warning"><i class="fas fa-clock"></i> Chờ xử lý</span>' :
+                            '<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Đã hủy</span>';
+
+                        return `
+                            <tr>
+                                <td><strong>${order.order_number}</strong></td>
+                                <td>${order.customer.name}</td>
+                                <td>${formatDate(order.order_date)}</td>
+                                <td>${formatCurrency(order.total)}</td>
+                                <td>${formatCurrency(order.paid_amount)}</td>
+                                <td style="color: ${order.total - order.paid_amount > 0 ? '#e74c3c' : '#27ae60'}">
+                                    ${formatCurrency(order.total - order.paid_amount)}
+                                </td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="viewInvoice(${order.id})">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                    ${order.status === 'pending' ? `
+                                        <button class="btn btn-sm btn-success" onclick="completeOrder(${order.id})">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="cancelOrder(${order.id})">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    // Pagination
+                    renderPagination(data.data);
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const renderPagination = (data) => {
+            const pagination = document.getElementById('pagination');
+            const totalPages = data.last_page;
+            currentPage = data.current_page;
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            if (currentPage > 1) {
+                html += `<button onclick="loadOrders(${currentPage - 1})">Trước</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="${i === currentPage ? 'active' : ''}" onclick="loadOrders(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<span>...</span>';
+                }
+            }
+
+            if (currentPage < totalPages) {
+                html += `<button onclick="loadOrders(${currentPage + 1})">Sau</button>`;
+            }
+
+            pagination.innerHTML = html;
+        };
+
+        const viewInvoice = (id) => {
+            window.location.href = `/invoice.html?id=${id}`;
+        };
+
+        const completeOrder = async (id) => {
+            if (!confirm('Xác nhận hoàn thành đơn hàng này?')) return;
+
+            try {
+                const data = await apiRequest(`/sales-orders/${id}/complete`, { method: 'POST' });
+                if (data && data.success) {
+                    showAlert('Đã hoàn thành đơn hàng!', 'success');
+                    loadOrders(currentPage);
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const cancelOrder = async (id) => {
+            if (!confirm('Xác nhận hủy đơn hàng này?')) return;
+
+            try {
+                const data = await apiRequest(`/sales-orders/${id}/cancel`, { method: 'POST' });
+                if (data && data.success) {
+                    showAlert('Đã hủy đơn hàng!', 'success');
+                    loadOrders(currentPage);
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loadOrders(1);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => loadOrders());
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý chi nhánh - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="/branches.html"><i class="fas fa-building"></i> Chi nhánh</a>
+                <a href="/staff.html"><i class="fas fa-user-tie"></i> Nhân viên</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-building"></i> Quản lý chi nhánh</h2>
+                <button class="btn btn-primary" onclick="showAddModal()">
+                    <i class="fas fa-plus"></i> Thêm chi nhánh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Tên chi nhánh</th>
+                                <th>Địa chỉ</th>
+                                <th>Người quản lý</th>
+                                <th>Điện thoại</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="branchesTableBody">
+                            <tr><td colspan="7" class="loading">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="branchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm chi nhánh</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="branchForm">
+                <input type="hidden" id="branchId">
+                <div class="form-group">
+                    <label for="code">Mã chi nhánh *</label>
+                    <input type="text" id="code" required placeholder="VD: CN001, WH001">
+                </div>
+                <div class="form-group">
+                    <label for="name">Tên chi nhánh *</label>
+                    <input type="text" id="name" required placeholder="VD: Chi nhánh Q.1">
+                </div>
+                <div class="form-group">
+                    <label for="address">Địa chỉ</label>
+                    <textarea id="address" rows="2" placeholder="Địa chỉ đầy đủ"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="managerName">Người quản lý</label>
+                    <input type="text" id="managerName" placeholder="Tên người quản lý">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Điện thoại</label>
+                    <input type="text" id="phone" placeholder="Số điện thoại">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isActive" checked>
+                        Kích hoạt chi nhánh
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const loadBranches = async () => {
+            try {
+                const data = await apiRequest('/warehouses');
+
+                if (data && data.success) {
+                    const tbody = document.getElementById('branchesTableBody');
+                    const branches = data.data.data || data.data || [];
+
+                    if (branches.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Chưa có chi nhánh nào</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = branches.map(branch => `
+                        <tr>
+                            <td><strong>${branch.code}</strong></td>
+                            <td>${branch.name}</td>
+                            <td>${branch.address || '-'}</td>
+                            <td>${branch.manager_name || '-'}</td>
+                            <td>${branch.phone || '-'}</td>
+                            <td>${branch.is_active ? '<span class="badge badge-success">Hoạt động</span>' : '<span class="badge badge-danger">Tắt</span>'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editBranch(${branch.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteBranch(${branch.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const showAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm chi nhánh';
+            document.getElementById('branchForm').reset();
+            document.getElementById('branchId').value = '';
+            document.getElementById('branchModal').classList.add('show');
+        };
+
+        const editBranch = async (id) => {
+            try {
+                const data = await apiRequest(`/warehouses/${id}`);
+                if (data && data.success) {
+                    const branch = data.data;
+                    document.getElementById('modalTitle').textContent = 'Sửa chi nhánh';
+                    document.getElementById('branchId').value = branch.id;
+                    document.getElementById('code').value = branch.code;
+                    document.getElementById('name').value = branch.name;
+                    document.getElementById('address').value = branch.address || '';
+                    document.getElementById('managerName').value = branch.manager_name || '';
+                    document.getElementById('phone').value = branch.phone || '';
+                    document.getElementById('isActive').checked = branch.is_active;
+                    document.getElementById('branchModal').classList.add('show');
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const deleteBranch = async (id) => {
+            if (!confirm('Bạn có chắc muốn xóa chi nhánh này?')) return;
+
+            try {
+                const data = await apiRequest(`/warehouses/${id}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    showAlert('Xóa chi nhánh thành công!', 'success');
+                    loadBranches();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const closeModal = () => {
+            document.getElementById('branchModal').classList.remove('show');
+        };
+
+        document.getElementById('branchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('branchId').value;
+            const payload = {
+                code: document.getElementById('code').value,
+                name: document.getElementById('name').value,
+                address: document.getElementById('address').value,
+                manager_name: document.getElementById('managerName').value,
+                phone: document.getElementById('phone').value,
+                is_active: document.getElementById('isActive').checked
+            };
+
+            try {
+                const url = id ? `/warehouses/${id}` : '/warehouses';
+                const method = id ? 'PUT' : 'POST';
+                const data = await apiRequest(url, {
+                    method: method,
+                    body: JSON.stringify(payload)
+                });
+
+                if (data && data.success) {
+                    showAlert(id ? 'Cập nhật thành công!' : 'Thêm chi nhánh thành công!', 'success');
+                    closeModal();
+                    loadBranches();
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadBranches);
+    </script>
+</body>
+</html>

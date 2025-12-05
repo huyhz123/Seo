@@ -19,6 +19,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('purchase_price', 15, 2)->default(0);
             $table->decimal('selling_price', 15, 2)->default(0);
+            $table->decimal('wholesale_price', 15, 2)->nullable()->comment('Giá bán buôn');
+            $table->decimal('retail_price', 15, 2)->nullable()->comment('Giá bán lẻ');
             $table->string('image')->nullable();
             $table->integer('min_stock')->default(0);
             $table->boolean('is_active')->default(true);

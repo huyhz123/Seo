@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý tỷ giá - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="/branches.html"><i class="fas fa-building"></i> Chi nhánh</a>
+                <a href="/staff.html"><i class="fas fa-user-tie"></i> Nhân viên</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-dollar-sign"></i> Quản lý tỷ giá</h2>
+                <button class="btn btn-primary" onclick="showAddModal()">
+                    <i class="fas fa-plus"></i> Thêm tiền tệ
+                </button>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                    <p style="margin: 0;"><i class="fas fa-info-circle"></i> <strong>Lưu ý:</strong> Tỷ giá được lưu theo VND làm gốc. 1 USD = X VND</p>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã tiền tệ</th>
+                                <th>Tên</th>
+                                <th>Ký hiệu</th>
+                                <th>Tỷ giá (so với VND)</th>
+                                <th>Cập nhật lúc</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currenciesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="currencyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm tiền tệ</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="currencyForm">
+                <input type="hidden" id="currencyId">
+                <div class="form-group">
+                    <label for="code">Mã tiền tệ *</label>
+                    <input type="text" id="code" required placeholder="VD: USD, EUR, JPY" maxlength="3" style="text-transform: uppercase;">
+                    <small>3 ký tự theo chuẩn ISO 4217</small>
+                </div>
+                <div class="form-group">
+                    <label for="name">Tên tiền tệ *</label>
+                    <input type="text" id="name" required placeholder="VD: US Dollar, Euro">
+                </div>
+                <div class="form-group">
+                    <label for="symbol">Ký hiệu *</label>
+                    <input type="text" id="symbol" required placeholder="VD: $, €, ¥" maxlength="5">
+                </div>
+                <div class="form-group">
+                    <label for="rate">Tỷ giá (1 đơn vị = X VND) *</label>
+                    <input type="number" id="rate" required placeholder="VD: 25000" step="0.01" min="0">
+                    <small>VD: 1 USD = 25,000 VND → nhập 25000</small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isActive" checked>
+                        Kích hoạt tiền tệ
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Sample data (replace with API call)
+        let currencies = JSON.parse(localStorage.getItem('currencies') || '[]');
+
+        // Initialize default currencies if empty
+        if (currencies.length === 0) {
+            currencies = [
+                { id: 1, code: 'VND', name: 'Vietnamese Dong', symbol: '₫', rate: 1, is_active: true, updated_at: new Date().toISOString() },
+                { id: 2, code: 'USD', name: 'US Dollar', symbol: '$', rate: 25000, is_active: true, updated_at: new Date().toISOString() }
+            ];
+            localStorage.setItem('currencies', JSON.stringify(currencies));
+        }
+
+        const loadCurrencies = () => {
+            const tbody = document.getElementById('currenciesTableBody');
+
+            if (currencies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Chưa có tiền tệ nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currencies.map(curr => `
+                <tr>
+                    <td><strong>${curr.code}</strong></td>
+                    <td>${curr.name}</td>
+                    <td><span style="font-size: 18px;">${curr.symbol}</span></td>
+                    <td>${formatNumber(curr.rate)} VND</td>
+                    <td>${formatDate(curr.updated_at)}</td>
+                    <td>${curr.is_active ? '<span class="badge badge-success">Hoạt động</span>' : '<span class="badge badge-danger">Tắt</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editCurrency(${curr.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${curr.code !== 'VND' ? `
+                            <button class="btn btn-sm btn-danger" onclick="deleteCurrency(${curr.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        const formatNumber = (num) => {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        };
+
+        const showAddModal = () => {
+            document.getElementById('modalTitle').textContent = 'Thêm tiền tệ';
+            document.getElementById('currencyForm').reset();
+            document.getElementById('currencyId').value = '';
+            document.getElementById('currencyModal').classList.add('show');
+        };
+
+        const editCurrency = (id) => {
+            const curr = currencies.find(c => c.id == id);
+            if (curr) {
+                document.getElementById('modalTitle').textContent = 'Sửa tiền tệ';
+                document.getElementById('currencyId').value = curr.id;
+                document.getElementById('code').value = curr.code;
+                document.getElementById('name').value = curr.name;
+                document.getElementById('symbol').value = curr.symbol;
+                document.getElementById('rate').value = curr.rate;
+                document.getElementById('isActive').checked = curr.is_active;
+                document.getElementById('currencyModal').classList.add('show');
+            }
+        };
+
+        const deleteCurrency = (id) => {
+            if (!confirm('Bạn có chắc muốn xóa tiền tệ này?')) return;
+
+            currencies = currencies.filter(c => c.id != id);
+            localStorage.setItem('currencies', JSON.stringify(currencies));
+            showAlert('Xóa tiền tệ thành công!', 'success');
+            loadCurrencies();
+        };
+
+        const closeModal = () => {
+            document.getElementById('currencyModal').classList.remove('show');
+        };
+
+        document.getElementById('currencyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('currencyId').value;
+            const payload = {
+                id: id || Date.now(),
+                code: document.getElementById('code').value.toUpperCase(),
+                name: document.getElementById('name').value,
+                symbol: document.getElementById('symbol').value,
+                rate: parseFloat(document.getElementById('rate').value),
+                is_active: document.getElementById('isActive').checked,
+                updated_at: new Date().toISOString()
+            };
+
+            if (id) {
+                // Update
+                const index = currencies.findIndex(c => c.id == id);
+                if (index !== -1) {
+                    currencies[index] = { ...currencies[index], ...payload };
+                }
+            } else {
+                // Add
+                currencies.push(payload);
+            }
+
+            localStorage.setItem('currencies', JSON.stringify(currencies));
+            showAlert(id ? 'Cập nhật thành công!' : 'Thêm tiền tệ thành công!', 'success');
+            closeModal();
+            loadCurrencies();
+        });
+
+        document.addEventListener('DOMContentLoaded', loadCurrencies);
+    </script>
+</body>
+</html>
