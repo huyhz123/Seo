@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm kê kho - HZ</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">HZ</div>
+            <div class="navbar-menu">
+                <a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/products.html"><i class="fas fa-box"></i> Sản phẩm</a>
+                <a href="/sales.html"><i class="fas fa-shopping-cart"></i> Bán hàng</a>
+                <a href="/orders.html"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="/stocktake.html"><i class="fas fa-clipboard-check"></i> Kiểm kê</a>
+                <a href="/settings.html"><i class="fas fa-cog"></i> Admin</a>
+                <span id="userName" style="color: #667eea; font-weight: 600;"></span>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-clipboard-check"></i> Kiểm kê kho hàng</h2>
+                <button class="btn btn-primary" onclick="createNewStockTake()">
+                    <i class="fas fa-plus"></i> Tạo phiếu kiểm kê mới
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Chọn chi nhánh/kho</label>
+                    <select id="warehouseSelect">
+                        <option value="1">Kho chính</option>
+                    </select>
+                </div>
+
+                <div style="margin: 20px 0; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                    <p style="margin: 0;"><i class="fas fa-info-circle"></i> <strong>Hướng dẫn:</strong></p>
+                    <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li>Nhập số lượng thực tế đếm được</li>
+                        <li>Hệ thống sẽ tự động so sánh với số lượng trong hệ thống</li>
+                        <li>Hiển thị chênh lệch (thừa/thiếu)</li>
+                        <li>In phiếu kiểm kê để lưu trữ</li>
+                    </ul>
+                </div>
+
+                <div class="table-container" id="stockTakeTable" style="display: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã SP</th>
+                                <th>Tên sản phẩm</th>
+                                <th>SL hệ thống</th>
+                                <th>SL thực tế</th>
+                                <th>Chênh lệch</th>
+                                <th>Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTakeBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="stockTakeActions" style="display: none; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="saveStockTake()">
+                        <i class="fas fa-save"></i> Lưu phiếu kiểm kê
+                    </button>
+                    <button class="btn btn-info" onclick="printStockTake()">
+                        <i class="fas fa-print"></i> In phiếu
+                    </button>
+                    <button class="btn btn-danger" onclick="cancelStockTake()">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-history"></i> Lịch sử kiểm kê</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Ngày kiểm kê</th>
+                                <th>Kho</th>
+                                <th>Người kiểm</th>
+                                <th>Số SP</th>
+                                <th>Chênh lệch</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr><td colspan="7" style="text-align: center;">Chưa có phiếu kiểm kê nào</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let products = [];
+        let stockTakeData = [];
+
+        const createNewStockTake = async () => {
+            try {
+                const data = await apiRequest('/products?per_page=1000');
+                if (data && data.success) {
+                    products = data.data.data;
+                    renderStockTakeTable();
+                    document.getElementById('stockTakeTable').style.display = 'block';
+                    document.getElementById('stockTakeActions').style.display = 'block';
+                }
+            } catch (error) {
+                showAlert('Lỗi: ' + error.message, 'danger');
+            }
+        };
+
+        const renderStockTakeTable = () => {
+            const tbody = document.getElementById('stockTakeBody');
+            tbody.innerHTML = products.map((product, index) => {
+                const systemQty = product.inventory?.[0]?.quantity || 0;
+                return `
+                    <tr id="row-${product.id}">
+                        <td>${index + 1}</td>
+                        <td>${product.code}</td>
+                        <td>${product.name}</td>
+                        <td><strong>${systemQty}</strong></td>
+                        <td>
+                            <input type="number"
+                                id="actual-${product.id}"
+                                value="${systemQty}"
+                                min="0"
+                                style="width: 80px; padding: 5px;"
+                                onchange="calculateDiff(${product.id}, ${systemQty})">
+                        </td>
+                        <td id="diff-${product.id}" style="font-weight: bold;">0</td>
+                        <td>
+                            <input type="text"
+                                id="note-${product.id}"
+                                placeholder="Ghi chú..."
+                                style="width: 150px; padding: 5px;">
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        const calculateDiff = (productId, systemQty) => {
+            const actualQty = parseFloat(document.getElementById(`actual-${productId}`).value) || 0;
+            const diff = actualQty - systemQty;
+            const diffCell = document.getElementById(`diff-${productId}`);
+
+            diffCell.textContent = diff;
+            if (diff > 0) {
+                diffCell.style.color = '#27ae60';
+                diffCell.textContent = '+' + diff;
+            } else if (diff < 0) {
+                diffCell.style.color = '#e74c3c';
+            } else {
+                diffCell.style.color = '#95a5a6';
+            }
+        };
+
+        const saveStockTake = () => {
+            const stockTake = {
+                id: 'ST' + Date.now(),
+                date: new Date().toISOString(),
+                warehouse: document.getElementById('warehouseSelect').options[document.getElementById('warehouseSelect').selectedIndex].text,
+                user: JSON.parse(localStorage.getItem('user') || '{}').name || 'Admin',
+                items: products.map(p => ({
+                    product_id: p.id,
+                    product_code: p.code,
+                    product_name: p.name,
+                    system_qty: p.inventory?.[0]?.quantity || 0,
+                    actual_qty: parseFloat(document.getElementById(`actual-${p.id}`).value) || 0,
+                    diff: (parseFloat(document.getElementById(`actual-${p.id}`).value) || 0) - (p.inventory?.[0]?.quantity || 0),
+                    note: document.getElementById(`note-${p.id}`).value
+                }))
+            };
+
+            let history = JSON.parse(localStorage.getItem('stockTakeHistory') || '[]');
+            history.unshift(stockTake);
+            localStorage.setItem('stockTakeHistory', JSON.stringify(history));
+
+            showAlert('Đã lưu phiếu kiểm kê!', 'success');
+            loadHistory();
+            cancelStockTake();
+        };
+
+        const printStockTake = () => {
+            window.print();
+        };
+
+        const cancelStockTake = () => {
+            document.getElementById('stockTakeTable').style.display = 'none';
+            document.getElementById('stockTakeActions').style.display = 'none';
+            document.getElementById('stockTakeBody').innerHTML = '';
+        };
+
+        const loadHistory = () => {
+            const history = JSON.parse(localStorage.getItem('stockTakeHistory') || '[]');
+            const tbody = document.getElementById('historyBody');
+
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Chưa có phiếu kiểm kê nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = history.map(item => {
+                const totalDiff = item.items.reduce((sum, i) => sum + Math.abs(i.diff), 0);
+                return `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td>${formatDate(item.date)}</td>
+                        <td>${item.warehouse}</td>
+                        <td>${item.user}</td>
+                        <td>${item.items.length}</td>
+                        <td><span class="badge badge-warning">${totalDiff}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewStockTake('${item.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        const viewStockTake = (id) => {
+            showAlert('Xem chi tiết phiếu ' + id, 'info');
+        };
+
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+</html>
