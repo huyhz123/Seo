@@ -102,6 +102,22 @@
                     <input type="number" id="sellingPrice" required min="0">
                 </div>
                 <div class="form-group">
+                    <label>Giá bán buôn</label>
+                    <input type="number" id="wholesalePrice" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Giá bán lẻ</label>
+                    <input type="number" id="retailPrice" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Kho hàng *</label>
+                    <select id="warehouseId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Số lượng nhập ban đầu *</label>
+                    <input type="number" id="initialQuantity" required min="0" value="0">
+                </div>
+                <div class="form-group">
                     <label>Tồn kho tối thiểu</label>
                     <input type="number" id="minStock" value="0" min="0">
                 </div>
@@ -166,6 +182,14 @@
                     document.getElementById('unitId').innerHTML = formData.units.map(u =>
                         `<option value="${u.id}">${u.name}</option>`
                     ).join('');
+
+                    // Load warehouses
+                    const warehousesData = await apiRequest('/warehouses');
+                    if (warehousesData && warehousesData.success) {
+                        document.getElementById('warehouseId').innerHTML = warehousesData.data.map(w =>
+                            `<option value="${w.id}">${w.name}</option>`
+                        ).join('');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading form data:', error);
@@ -176,6 +200,8 @@
             document.getElementById('modalTitle').textContent = 'Thêm sản phẩm';
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
+            document.getElementById('initialQuantity').disabled = false; // Enable when adding
+            document.getElementById('warehouseId').disabled = false;
             openModal('productModal');
         };
 
@@ -194,8 +220,13 @@
                     document.getElementById('unitId').value = p.unit_id;
                     document.getElementById('purchasePrice').value = p.purchase_price;
                     document.getElementById('sellingPrice').value = p.selling_price;
+                    document.getElementById('wholesalePrice').value = p.wholesale_price || '';
+                    document.getElementById('retailPrice').value = p.retail_price || '';
                     document.getElementById('minStock').value = p.min_stock;
                     document.getElementById('description').value = p.description || '';
+                    document.getElementById('initialQuantity').value = 0;
+                    document.getElementById('initialQuantity').disabled = true; // Disable when editing
+                    document.getElementById('warehouseId').disabled = true;
                     openModal('productModal');
                 }
             } catch (error) {
@@ -230,9 +261,17 @@
                 unit_id: document.getElementById('unitId').value,
                 purchase_price: document.getElementById('purchasePrice').value,
                 selling_price: document.getElementById('sellingPrice').value,
+                wholesale_price: document.getElementById('wholesalePrice').value || null,
+                retail_price: document.getElementById('retailPrice').value || null,
                 min_stock: document.getElementById('minStock').value,
                 description: document.getElementById('description').value,
             };
+
+            // Add inventory if creating new product
+            if (!id) {
+                payload.warehouse_id = document.getElementById('warehouseId').value;
+                payload.initial_quantity = document.getElementById('initialQuantity').value;
+            }
 
             try {
                 const url = id ? `/products/${id}` : '/products';
